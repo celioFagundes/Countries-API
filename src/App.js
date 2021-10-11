@@ -24,8 +24,8 @@ function App() {
           <Header toggleTheme = {handleTheme} theme = {theme.title}/>
           <Switch>
             <CountriesContext>
-              <Route exact path="https://celiofagundes.github.io/Countries-API/" render={(props) => <HomePage {...props} theme ={theme.title}/>} />
-              <Route exact path="https://celiofagundes.github.io/Countries-API/:id" render={(props) => <DetailPage {...props} theme ={theme.title}/>} />
+              <Route exact path="/" render={(props) => <HomePage {...props} theme ={theme.title}/>} />
+              <Route exact path="/details/:id" render={(props) => <DetailPage {...props} theme ={theme.title}/>} />
             </CountriesContext>
           </Switch>
         </div>
