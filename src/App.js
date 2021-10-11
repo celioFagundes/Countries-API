@@ -24,7 +24,7 @@ function App() {
           <Header toggleTheme = {handleTheme} theme = {theme.title}/>
           <Switch>
             <CountriesContext>
-              <Route exact path="/" render={(props) => <HomePage {...props} theme ={theme.title}/>} />
+              <Route exact path="/Countries-API/" render={(props) => <HomePage {...props} theme ={theme.title}/>} />
               <Route exact path="/details/:id" render={(props) => <DetailPage {...props} theme ={theme.title}/>} />
             </CountriesContext>
           </Switch>

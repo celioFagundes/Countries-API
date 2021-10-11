@@ -117,7 +117,7 @@ function DetailPage({match,theme}) {
     }
     return (    
         <Wrapper className = 'container'>
-            <Link to ='/' style={{ textDecoration: 'none' }}>
+            <Link to ='/Countries-API/' style={{ textDecoration: 'none' }}>
                 <Back><BsArrowLeft color = {theme ==='dark' ? '#fff' : '#000'} size = {22}/>Back</Back>
             </Link>
             <Container >
