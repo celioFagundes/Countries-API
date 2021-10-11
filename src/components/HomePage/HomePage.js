@@ -111,7 +111,7 @@ function HomePage(props) {
                 </InputsContainer>
                 <CardsContainer length = {displayList.length}>
                     {displayList.map((item,index) =>(
-                        <Link to = {'/details/' + item.cca2} key = {index}>
+                        <Link to = {'https://celiofagundes.github.io/Countries-API/details/' + item.cca2} key = {index}>
                             <Card 
                             key = {index} 
                             length = {displayList.length}
