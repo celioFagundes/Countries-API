@@ -1,23 +1,49 @@
-import React, {useState,useEffect,useCallback} from 'react'
+import React, {useState,useEffect,useReducer} from 'react'
 import { Wrapper,Back,Container ,Image, InfoContainer, Title, InfoColumns, Column,Info,BordersContainer, Button, BorderLabel, Span,} from './styles'
 
 import { Link} from 'react-router-dom'
 import {BsArrowLeft} from 'react-icons/bs'
 import {SyncLoader} from 'react-spinners'
 import { useCountriesContext } from '../ContextCountries/context'
+
 function DetailPage({match,theme}) {
     
     const {countries,setCountries} = useCountriesContext()
-    const [country,setCountry] = useState([])
     const [loading,setLoading] = useState(true)
-    const [nativeName,setNativeName] = useState([])
-    const [currencies,setCurrencies] = useState([])
-    const [languagesObject,setLanguagesObject] = useState()
-    const [languagesList,setLanguagesList] = useState([])
-    const [borders,setBorders] = useState([])
-    const [countriesId,setCountriesId] = useState([]) //All countries countries  codes (like : 'FRA') and names
-    const [borderCountries,setBorderCountries] = useState([]) 
-    
+
+    const initialState = {
+        country: [],
+        nativeName: [],
+        languagesObj:{},
+        languagesList : [],
+        borders: [],
+        countriesId: [],
+        borderCountries: []
+    }
+
+    function reducer(state,action){
+        switch(action.type){
+            case 'country':
+                return { ...state,country: action.payload};
+            case 'native':
+                return {...state, nativeName : action.payload};
+            case 'langobject':
+                return {...state, languagesObj: action.payload};
+            case 'borders': 
+                return{...state, borders: action.payload};    
+            case 'IDs': 
+                return {...state, countriesId: action.payload};
+            case 'bordersCountries':
+                return {...state, borderCountries: action.payload};
+            case 'langList' :
+                return {...state, languagesList: action.payload}
+            default: return  state
+                
+        }
+    }
+
+    const [state,dispatch] = useReducer(reducer,initialState)
+
     useEffect(() => {
         
         if(!countries.length > 0){
@@ -28,17 +54,15 @@ function DetailPage({match,theme}) {
          }
         
     }, [setCountries,countries.length])
+    
     useEffect(() =>{
-        setLanguagesList([])
-        setBorderCountries([])
         fetch('https://restcountries.com/v3.1/alpha/' + match.params.id )
         .then(res => res.json())
         .then(data => {
-            setCountry(data[0])
-            setNativeName(data[0].name.nativeName)
-            setCurrencies(data[0].currencies)
-            setLanguagesObject(data[0].languages)
-            setBorders(data[0].borders)
+            dispatch({type:'country',payload: data[0]})
+            dispatch({type:'native', payload: data[0].name.nativeName})
+            dispatch({type: 'langobject', payload: data[0].languages})
+            dispatch({type:'borders', payload: data[0].borders})
             setLoading(false)
         })
 
@@ -47,60 +71,53 @@ function DetailPage({match,theme}) {
     //Converts the language objects into an array
     useEffect(() =>{
         
-        for(let lang in languagesObject){
-            setLanguagesList( languagesList =>[...languagesList,languagesObject[lang]])
+        let list = []
+        for(let lang in state.languagesObj){
+            list.push(state.languagesObj[lang])
         }
+        dispatch({type :'langList', payload : list})
     
-    },[languagesObject])
+    },[state.languagesObj])
     
-    //Create a array of obj with id as country cca3 and name as country name, using useCallback to solve eslint dependency error
-
-    const createID = useCallback(() => {
-
-            for(let c in countries){
-                setCountriesId(countriesId =>[...countriesId, {
-                    name : countries[c].name.common,
-                    id: countries[c].cca3
-                }])
-            }
-        }, [countries],
-    )
+    //Create a array of obj with id as country cca3 and name as country name
 
     useEffect(() =>{
+        let idList = []
+        for(let c in countries){
+            idList.push({
+                name:countries[c].name.common,
+                id: countries[c].cca3
+                })
+        }
+        dispatch({type: 'IDs', payload: idList})
+    },[countries])
 
-        createID()
-        
-    },[countries,createID])
 
     //Compares the obj array with the borders arrays to match the border and cca3 parameters
     useEffect(()=>{
-        if(borders){
-        let filter = countriesId.filter(item => borders.includes(item.id))
-        setBorderCountries(borderCountries =>[...borderCountries,...filter])
-        }
-    },[borders,countriesId])
-
-    if(loading){
-        return <div style = {{display:'flex', flexDirection: 'column', alignItems:'center' ,justifyContent:'center',height:'40vh'}}><SyncLoader  size = {12} color = 'white' loading = {loading}/></div>
-    }
-
+        if(state.borders){
+        let filter = state.countriesId.filter(item => state.borders.includes(item.id))
+        dispatch({type :'bordersCountries',payload: filter})
     
+        }
+    },[state.borders,state.countriesId])
+
     const renderCapitals = () =>{
         
-        if(country.capital){
-        return  country.capital.map((cap,index) =>(
-            <div key = {index}> {index !== country.capital.length - 1 ? cap + ',' : cap} </div>
+        if(state.country.capital){
+        return  state.country.capital.map((cap,index) =>(
+            <div key = {index}> {index !== state.country.capital.length - 1 ? cap + ',' : cap} </div>
             ))}
         else{
             return <div>No capital</div>
         }
     }
 
-    const renderlanguagesObject = () =>{
-        if(languagesList.length > 0){
-         return languagesList.map((item,index) =>(
+    const renderlanguages = () =>{
+        if(state.languagesList.length > 0){
+         return state.languagesList.map((item,index) =>(
             <div key = {index}>
-                {index !== languagesList.length -1 ? item + ',' : item}
+                {index !== state.languagesList.length -1 ? item + ',' : item}
             </div>))}  
         else{
             return <div>No languages</div>
@@ -108,12 +125,19 @@ function DetailPage({match,theme}) {
     }
     
     const renderBorders = () =>{
-        if(borderCountries.length > 0){
-            return borderCountries.map((item,index) => (
+        if(state.borderCountries.length > 0){
+            return state.borderCountries.map((item,index) => (
             <Link to = {'/details/' + item.id} key = {index} ><Button>{item.name}</Button></Link>))
         }else{
             return <div>No borders</div>
         }
+    }
+
+    if(loading){
+        return (
+        <div style = {{display:'flex', flexDirection: 'column', alignItems:'center' ,justifyContent:'center',height:'40vh'}}>
+            <SyncLoader  size = {12} color = {theme === 'dark' ? '#fff' : '#000'} loading = {loading}/>
+        </div>)
     }
     return (    
         <Wrapper className = 'container'>
@@ -121,22 +145,22 @@ function DetailPage({match,theme}) {
                 <Back><BsArrowLeft color = {theme ==='dark' ? '#fff' : '#000'} size = {22}/>Back</Back>
             </Link>
             <Container >
-                <Image src = {country.flags.svg} alt = {country.name.common}/>
+                <Image src = {state.country.flags.svg} alt = {state.country.name.common}/>
                 <InfoContainer>
-                    <Title>{country.name.common}</Title>
+                    <Title>{state.country.name.common}</Title>
                     <InfoColumns>
                         <Column>
                             <Info><Span>Native Name:</Span>
-                                { country.name.nativeName ? Object.values(nativeName)[0].common : 'No native name'}
+                                { state.country.name.nativeName ?   Object.values(state.nativeName)[0].common : 'No native name'}
                              </Info>
                             <Info><Span>Population:</Span>
-                                {country.population}
+                                {state.country.population.toLocaleString('pt-br')}
                             </Info>
                             <Info><Span>Region:</Span>
-                                {country.region}
+                                {state.country.region}
                             </Info>
                             <Info><Span>Sub Region:</Span>
-                                {country.subregion ? country.subregion : 'No subregions'}
+                                {state.country.subregion ? state.country.subregion : 'No subregions'}
                             </Info>
                             <Info><Span>Capital:</Span> 
                                 {renderCapitals()}
@@ -144,13 +168,13 @@ function DetailPage({match,theme}) {
                         </Column>
                         <Column>
                             <Info><Span>Top Level Domain:</Span>
-                                {country.tld}
+                                {state.country.tld}
                             </Info>
                             <Info><Span>Currencies:</Span>
-                                {country.currencies ? Object.values(currencies)[0].name : 'No currencies'}
+                                {state.country.currencies ? Object.values(state.country.currencies)[0].name : 'No currencies'}
                              </Info>
                             <Info><Span>Languages:</Span> 
-                                {renderlanguagesObject()}
+                                {renderlanguages()}
                             </Info>
                         </Column>
                     </InfoColumns>

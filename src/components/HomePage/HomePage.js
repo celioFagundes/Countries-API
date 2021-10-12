@@ -84,10 +84,11 @@ function HomePage(props) {
         }
     }
     if(loading){
-        return <div style = {{display:'flex', flexDirection: 'column', alignItems:'center' ,justifyContent:'center',height:'40vh'}}><SyncLoader  size = {12} color = 'white' loading = {loading}/></div>
+        return (
+        <div style = {{display:'flex', flexDirection: 'column', alignItems:'center' ,justifyContent:'center',height:'40vh'}}>
+            <SyncLoader  size = {12} color = {props.theme === 'dark' ? '#fff' : '#000'} loading = {loading}/>
+        </div>)
     }
-
-   
     
     return (
        <Wrapper>    
