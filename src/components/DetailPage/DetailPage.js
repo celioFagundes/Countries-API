@@ -9,34 +9,20 @@ import { useCountriesContext } from '../ContextCountries/context'
 function DetailPage({match,theme}) {
     
     const {countries,setCountries} = useCountriesContext()
+    const [country, setCountry] = useState({})
     const [loading,setLoading] = useState(true)
 
     const initialState = {
-        country: [],
-        nativeName: [],
-        languagesObj:{},
-        languagesList : [],
-        borders: [],
         countriesId: [],
         borderCountries: []
     }
 
     function reducer(state,action){
         switch(action.type){
-            case 'country':
-                return { ...state,country: action.payload};
-            case 'native':
-                return {...state, nativeName : action.payload};
-            case 'langobject':
-                return {...state, languagesObj: action.payload};
-            case 'borders': 
-                return{...state, borders: action.payload};    
             case 'IDs': 
                 return {...state, countriesId: action.payload};
             case 'bordersCountries':
                 return {...state, borderCountries: action.payload};
-            case 'langList' :
-                return {...state, languagesList: action.payload}
             default: return  state
                 
         }
@@ -59,25 +45,13 @@ function DetailPage({match,theme}) {
         fetch('https://restcountries.com/v3.1/alpha/' + match.params.id )
         .then(res => res.json())
         .then(data => {
-            dispatch({type:'country',payload: data[0]})
-            dispatch({type:'native', payload: data[0].name.nativeName})
-            dispatch({type: 'langobject', payload: data[0].languages})
-            dispatch({type:'borders', payload: data[0].borders})
+            setCountry(data[0])
             setLoading(false)
         })
 
     }, [match.params.id])
 
-    //Converts the language objects into an array
-    useEffect(() =>{
-        
-        let list = []
-        for(let lang in state.languagesObj){
-            list.push(state.languagesObj[lang])
-        }
-        dispatch({type :'langList', payload : list})
-    
-    },[state.languagesObj])
+ 
     
     //Create a array of obj with id as country cca3 and name as country name
 
@@ -93,20 +67,21 @@ function DetailPage({match,theme}) {
     },[countries])
 
 
-    //Compares the obj array with the borders arrays to match the border and cca3 parameters
+    //Compares the ids array with the borders arrays to match the border and cca3 parameters
     useEffect(()=>{
-        if(state.borders){
-        let filter = state.countriesId.filter(item => state.borders.includes(item.id))
+        
+        if(country.borders){
+        let filter = state.countriesId.filter(item => country.borders.includes(item.id))
         dispatch({type :'bordersCountries',payload: filter})
     
         }
-    },[state.borders,state.countriesId])
+    },[country.borders,state.countriesId])
 
     const renderCapitals = () =>{
         
-        if(state.country.capital){
-        return  state.country.capital.map((cap,index) =>(
-            <div key = {index}> {index !== state.country.capital.length - 1 ? cap + ',' : cap} </div>
+        if(country.capital){
+        return  country.capital.map((cap,index) =>(
+            <div key = {index}> {index !== country.capital.length - 1 ? cap + ',' : cap} </div>
             ))}
         else{
             return <div>No capital</div>
@@ -114,10 +89,11 @@ function DetailPage({match,theme}) {
     }
 
     const renderlanguages = () =>{
-        if(state.languagesList.length > 0){
-         return state.languagesList.map((item,index) =>(
+        if(country.languages){
+        const keys = Object.values(country.languages)
+         return keys.map((item,index) =>(
             <div key = {index}>
-                {index !== state.languagesList.length -1 ? item + ',' : item}
+                {index !== keys.length -1 ? item + ',' : item}
             </div>))}  
         else{
             return <div>No languages</div>
@@ -132,6 +108,17 @@ function DetailPage({match,theme}) {
             return <div>No borders</div>
         }
     }
+    const renderCurrencies = () =>{
+        if(country.currencies){
+            const keys = Object.values(country.currencies)
+            return  keys.map((item,index) =>(
+                <p key = {index}>{ index !== keys.length - 1 ? item.name + ',' : item.name }</p>
+            ))
+        }else{
+            return <div>No currencies</div>
+        }
+      
+    }
 
     if(loading){
         return (
@@ -145,22 +132,25 @@ function DetailPage({match,theme}) {
                 <Back><BsArrowLeft color = {theme ==='dark' ? '#fff' : '#000'} size = {22}/>Back</Back>
             </Link>
             <Container >
-                <Image src = {state.country.flags.svg} alt = {state.country.name.common}/>
+                <Image src = {country.flags.svg} alt = {country.name.common}/>
                 <InfoContainer>
-                    <Title>{state.country.name.common}</Title>
+                    <Title>{country.name.common}</Title>
                     <InfoColumns>
                         <Column>
                             <Info><Span>Native Name:</Span>
-                                { state.country.name.nativeName ?   Object.values(state.nativeName)[0].common : 'No native name'}
+                                { country.name.nativeName 
+                                ?   Object.values(country.name.nativeName)[0].common 
+                                : 'No native name'
+                                }
                              </Info>
                             <Info><Span>Population:</Span>
-                                {state.country.population.toLocaleString('pt-br')}
+                                {country.population.toLocaleString('pt-br')}
                             </Info>
                             <Info><Span>Region:</Span>
-                                {state.country.region}
+                                {country.region}
                             </Info>
                             <Info><Span>Sub Region:</Span>
-                                {state.country.subregion ? state.country.subregion : 'No subregions'}
+                                {country.subregion ? country.subregion : 'No subregions'}
                             </Info>
                             <Info><Span>Capital:</Span> 
                                 {renderCapitals()}
@@ -168,10 +158,10 @@ function DetailPage({match,theme}) {
                         </Column>
                         <Column>
                             <Info><Span>Top Level Domain:</Span>
-                                {state.country.tld}
+                                {country.tld}
                             </Info>
                             <Info><Span>Currencies:</Span>
-                                {state.country.currencies ? Object.values(state.country.currencies)[0].name : 'No currencies'}
+                              {  renderCurrencies()}
                              </Info>
                             <Info><Span>Languages:</Span> 
                                 {renderlanguages()}

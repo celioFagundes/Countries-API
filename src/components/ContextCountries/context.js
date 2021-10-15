@@ -2,7 +2,7 @@ import React, {useState,useContext,createContext} from 'react'
 
 const CountriesContext = createContext();
 
-export default function Context({children})  {
+export default function ContextProvider({children})  {
     const [countries,setCountries] = useState([])
 
     return (
