@@ -1,4 +1,4 @@
-import React, {useState,useEffect,useReducer} from 'react'
+import React, {useState,useEffect} from 'react'
 import { Wrapper,Back,Container ,Image, InfoContainer, Title, InfoColumns, Column,Info,BordersContainer, Button, BorderLabel, Span,} from './styles'
 
 import { Link} from 'react-router-dom'
@@ -10,25 +10,8 @@ function DetailPage({match,theme}) {
     
     const {countries,setCountries} = useCountriesContext()
     const [country, setCountry] = useState({})
+    const [borderCountries,setBorderCountries] = useState([])
     const [loading,setLoading] = useState(true)
-
-    const initialState = {
-        countriesId: [],
-        borderCountries: []
-    }
-
-    function reducer(state,action){
-        switch(action.type){
-            case 'IDs': 
-                return {...state, countriesId: action.payload};
-            case 'bordersCountries':
-                return {...state, borderCountries: action.payload};
-            default: return  state
-                
-        }
-    }
-
-    const [state,dispatch] = useReducer(reducer,initialState)
 
     useEffect(() => {
         
@@ -51,11 +34,11 @@ function DetailPage({match,theme}) {
 
     }, [match.params.id])
 
- 
-    
-    //Create a array of obj with id as country cca3 and name as country name
 
-    useEffect(() =>{
+    //Create a array of obj with id as country cca3 and name as country name
+    //Compares the ids array with the borders arrays to match the border and cca3 parameters
+    useEffect(()=>{
+            
         let idList = []
         for(let c in countries){
             idList.push({
@@ -63,19 +46,14 @@ function DetailPage({match,theme}) {
                 id: countries[c].cca3
                 })
         }
-        dispatch({type: 'IDs', payload: idList})
-    },[countries])
-
-
-    //Compares the ids array with the borders arrays to match the border and cca3 parameters
-    useEffect(()=>{
-        
         if(country.borders){
-        let filter = state.countriesId.filter(item => country.borders.includes(item.id))
-        dispatch({type :'bordersCountries',payload: filter})
+            
+            let filter = idList.filter(item => country.borders.includes(item.id))
+            console.log(filter)
+            setBorderCountries(filter)
     
         }
-    },[country.borders,state.countriesId])
+    },[country.borders,countries])
 
     const renderCapitals = () =>{
         
@@ -101,8 +79,8 @@ function DetailPage({match,theme}) {
     }
     
     const renderBorders = () =>{
-        if(state.borderCountries.length > 0){
-            return state.borderCountries.map((item,index) => (
+        if(borderCountries.length > 0){
+            return borderCountries.map((item,index) => (
             <Link to = {'/details/' + item.id} key = {index} ><Button>{item.name}</Button></Link>))
         }else{
             return <div>No borders</div>
